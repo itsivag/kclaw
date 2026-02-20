@@ -1,4 +1,4 @@
-package com.kug
+package com.kug.utils
 
 val IDENTITY_MD = """
     # IDENTITY.md — Undefined Agent

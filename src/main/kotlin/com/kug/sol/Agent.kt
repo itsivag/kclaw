@@ -1,4 +1,4 @@
-package com.kug
+package com.kug.sol
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.tools.ToolRegistry
@@ -7,6 +7,13 @@ import ai.koog.agents.ext.agent.chatAgentStrategy
 import ai.koog.agents.ext.agent.reActStrategy
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
+import com.kug.tools.CliTools
+import com.kug.tools.CronTools
+import com.kug.tools.FileTools
+import com.kug.tools.LogTools
+import com.kug.tools.WebTools
+import com.kug.tools.appendCronLog
+import com.kug.utils.installDir
 import java.io.File
 
 interface Agent {

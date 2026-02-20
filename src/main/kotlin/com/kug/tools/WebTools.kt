@@ -1,4 +1,4 @@
-package com.kug
+package com.kug.tools
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
@@ -6,7 +6,7 @@ import ai.koog.agents.core.tools.reflect.ToolSet
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse.BodyHandlers
+import java.net.http.HttpResponse
 
 class WebTools : ToolSet {
 
@@ -29,7 +29,7 @@ class WebTools : ToolSet {
                 .header("Authorization", "Bearer $tavilyKey")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build()
-            val response = http.send(request, BodyHandlers.ofString())
+            val response = http.send(request, HttpResponse.BodyHandlers.ofString())
             if (response.statusCode() == 200) response.body()
             else "Error: HTTP ${response.statusCode()} — ${response.body()}"
         } catch (e: Exception) {
@@ -49,7 +49,7 @@ class WebTools : ToolSet {
                 .header("Accept", "text/plain")
                 .GET()
                 .build()
-            val response = http.send(request, BodyHandlers.ofString())
+            val response = http.send(request, HttpResponse.BodyHandlers.ofString())
             if (response.statusCode() == 200) response.body().take(8000)
             else "Error: HTTP ${response.statusCode()}"
         } catch (e: Exception) {
