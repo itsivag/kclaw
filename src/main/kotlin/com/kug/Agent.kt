@@ -25,7 +25,7 @@ class AgentImpl : Agent {
     val agent = AIAgent(
         promptExecutor = simpleGoogleAIExecutor(apiKey),
         llmModel = GoogleModels.Gemini2_5Pro,
-        systemPrompt = "You are a helpful assistant. Always use SayToUser to respond to the user and AskUser to get their input. Keep the conversation going until the user says goodbye.",
+        systemPrompt = "You are a helpful assistant. Use the chat tool to send a message and get the user's reply. Always use chat — never respond with plain text. Continue the conversation until the user says goodbye.",
         strategy = chatAgentStrategy(),
         toolRegistry = toolRegistry
     )
