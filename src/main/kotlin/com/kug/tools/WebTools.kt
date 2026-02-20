@@ -36,25 +36,4 @@ class WebTools : ToolSet {
             "Error searching: ${e.message}"
         }
     }
-
-    @Tool
-    @LLMDescription(
-        "Fetch a public webpage and return its content as clean readable markdown. " +
-        "No API key required. Works on any public URL."
-    )
-    fun scrapeUrl(url: String): String {
-        return try {
-            val request = HttpRequest.newBuilder()
-                .uri(URI.create("https://r.jina.ai/$url"))
-                .header("Accept", "text/plain")
-                .GET()
-                .build()
-            val response = http.send(request, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() == 200) response.body().take(8000)
-            else "Error: HTTP ${response.statusCode()}"
-        } catch (e: Exception) {
-            "Error scraping URL: ${e.message}"
-        }
-    }
-
 }
