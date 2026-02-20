@@ -42,6 +42,7 @@ class AgentImpl : Agent {
         }
         val identityMd = File(kclawDir, "IDENTITY.md").takeIf { it.exists() }?.readText() ?: "(not set)"
         val heartbeatMd = File(kclawDir, "HEARTBEAT.md").takeIf { it.exists() }?.readText() ?: "(not set)"
+        val memoryMd = File(kclawDir, "MEMORY.md").takeIf { it.exists() }?.readText() ?: "(empty)"
         agent.run(
             """
             AGENT.md:
@@ -52,6 +53,9 @@ class AgentImpl : Agent {
 
             HEARTBEAT.md:
             $heartbeatMd
+
+            MEMORY.md (your long-term memory from previous sessions):
+            $memoryMd
 
             Follow the instructions above and greet the user.
             """.trimIndent()

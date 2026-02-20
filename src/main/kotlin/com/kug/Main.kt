@@ -38,6 +38,7 @@ class Onboard : CliktCommand(name = "onboard") {
             "IDENTITY.md" to IDENTITY_MD,
             "AGENT.md" to AGENT_MD,
             "HEARTBEAT.md" to HEARTBEAT_MD,
+            "MEMORY.md" to MEMORY_MD,
         )
         for ((name, content) in files) {
             val file = java.io.File(kclawDir, name)

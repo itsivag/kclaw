@@ -105,6 +105,27 @@ val HEARTBEAT_MD = """
     Feel free to define heartbeat behavior, execution rules, or operational constraints as needed.
 """.trimIndent()
 
+val MEMORY_MD = """
+    # MEMORY.md — Long-Term Memory
+
+    This file is managed by the agent. It stores information worth remembering across sessions.
+
+    ## What to store
+    * User preferences and working style
+    * Decisions made and their reasoning
+    * Recurring context that avoids re-asking the user
+    * Any fact the user has explicitly stated
+
+    ## What not to store
+    * Session-specific state
+    * Temporary or in-progress work
+    * Anything the user asked to forget
+
+    ---
+
+    <!-- Agent writes memories below this line -->
+""".trimIndent()
+
 val AGENT_MD = """
     # AGENTS.md — File Map
 
@@ -131,10 +152,23 @@ val AGENT_MD = """
 
     ---
 
+    ## Memory
+
+    Long-term memory is stored in:
+
+    `.kclaw/MEMORY.md`
+
+    - This file is provided to you at the start of every session.
+    - During the conversation, whenever you learn something worth remembering, immediately use writeFile to append it to `.kclaw/MEMORY.md`.
+    - Only store facts that are durable and useful across sessions. Do not store session-specific state.
+
+    ---
+
     ## Rule
 
     AGENTS.md is only a pointer.
 
     Identity → `.kclaw/IDENTITY.md`
     Execution loop → `.kclaw/HEARTBEAT.md`
+    Long-term memory → `.kclaw/MEMORY.md`
 """.trimIndent()
