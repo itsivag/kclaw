@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.core.main
 import kotlinx.coroutines.runBlocking
+import java.io.File
 
 class Kclaw : CliktCommand(name = "kclaw") {
     override fun run() = Unit
@@ -28,7 +29,7 @@ class Onboard : CliktCommand(name = "onboard") {
     }
 
     override fun run() {
-        val kclawDir = java.io.File(installDir(), ".kclaw")
+        val kclawDir = File(installDir(), ".kclaw")
         if (!kclawDir.exists()) {
             kclawDir.mkdirs()
             echo("Created ${kclawDir.path}")
@@ -41,7 +42,7 @@ class Onboard : CliktCommand(name = "onboard") {
             "MEMORY.md" to MEMORY_MD,
         )
         for ((name, content) in files) {
-            val file = java.io.File(kclawDir, name)
+            val file = File(kclawDir, name)
             if (file.exists()) {
                 echo("$name already exists, skipping.")
             } else {
@@ -49,10 +50,51 @@ class Onboard : CliktCommand(name = "onboard") {
                 echo("Created $name")
             }
         }
+
+        registerHeartbeatCron()
     }
+
+    private fun registerHeartbeatCron() {
+        val binary = File(installDir(), "bin/kclaw").absolutePath
+        val cronLine = "*/15 * * * * $binary heartbeat"
+
+        val listResult = ProcessBuilder("crontab", "-l")
+            .redirectErrorStream(true)
+            .start()
+        val existingCrontab = listResult.inputStream.bufferedReader().readText()
+        listResult.waitFor()
+        // Treat "no crontab" messages as an empty crontab
+        val currentLines = if (existingCrontab.contains("no crontab for")) {
+            emptyList()
+        } else {
+            existingCrontab.lines()
+        }
+
+        val newLines = if (currentLines.any { it.contains("kclaw heartbeat") }) {
+            currentLines.map { if (it.contains("kclaw heartbeat")) cronLine else it }
+        } else {
+            currentLines + cronLine
+        }
+
+        val newCrontab = newLines.joinToString("\n").trimEnd() + "\n"
+
+        val writeProc = ProcessBuilder("crontab", "-")
+            .redirectErrorStream(true)
+            .start()
+        writeProc.outputStream.bufferedWriter().use { it.write(newCrontab) }
+        writeProc.waitFor()
+
+        echo("Registered heartbeat cron: $cronLine")
+    }
+}
+
+class Heartbeat(val heartbeatAgent: HeartbeatAgent) : CliktCommand(name = "heartbeat") {
+    override fun help(context: Context) = "run the headless heartbeat agent (called from cron)"
+    override fun run() = runBlocking { heartbeatAgent.runHeartbeat() }
 }
 
 fun main(args: Array<String>) {
     val agent = AgentImpl()
-    Kclaw().subcommands(Start(agent), Onboard()).main(args)
+    val heartbeatAgent = HeartbeatAgentImpl()
+    Kclaw().subcommands(Start(agent), Onboard(), Heartbeat(heartbeatAgent)).main(args)
 }
