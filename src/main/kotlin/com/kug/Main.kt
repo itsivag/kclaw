@@ -22,7 +22,36 @@ class Start(val agent: Agent) : CliktCommand(name = "start") {
     }
 }
 
+class Onboard : CliktCommand(name = "onboard") {
+    override fun help(context: Context): String {
+        return "create .kclaw/IDENTITY.md, .kclaw/AGENT.md, and .kclaw/HEARTBEAT.md in the install directory"
+    }
+
+    override fun run() {
+        val kclawDir = java.io.File(installDir(), ".kclaw")
+        if (!kclawDir.exists()) {
+            kclawDir.mkdirs()
+            echo("Created ${kclawDir.path}")
+        }
+
+        val files = mapOf(
+            "IDENTITY.md" to IDENTITY_MD,
+            "AGENT.md" to AGENT_MD,
+            "HEARTBEAT.md" to HEARTBEAT_MD,
+        )
+        for ((name, content) in files) {
+            val file = java.io.File(kclawDir, name)
+            if (file.exists()) {
+                echo("$name already exists, skipping.")
+            } else {
+                file.writeText(content)
+                echo("Created $name")
+            }
+        }
+    }
+}
+
 fun main(args: Array<String>) {
     val agent = AgentImpl()
-    Kclaw().subcommands(Start(agent)).main(args)
+    Kclaw().subcommands(Start(agent), Onboard()).main(args)
 }
