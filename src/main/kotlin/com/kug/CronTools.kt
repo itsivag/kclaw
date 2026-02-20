@@ -49,12 +49,13 @@ class CronTools : ToolSet {
 
     @Tool
     @LLMDescription(
-        "Schedule an arbitrary cron job. " +
-        "'schedule' is a standard 5-field cron expression (e.g. '0 9 * * 1-5' = 9 am weekdays). " +
-        "'command' is the shell command to run. " +
-        "'label' is a unique short name used to identify or replace this job later."
+        "Schedule a recurring agent task. " +
+        "'schedule' is a standard 5-field cron expression (e.g. '*/5 * * * *' = every 5 min, '0 9 * * 1-5' = 9 am weekdays). " +
+        "'task' is a natural language instruction for the agent (e.g. 'search for top Reddit posts and save findings'). " +
+        "'label' is a unique short name used to identify or replace this job later. Results are saved to .kclaw/logs/<label>.md."
     )
-    fun setCronJob(schedule: String, command: String, label: String): String {
+    fun setCronJob(schedule: String, task: String, label: String): String {
+        val command = "$binary start --args ${shellQuote(task)} --label ${shellQuote(label)}"
         val line = upsert("$schedule $command", label)
         return "Scheduled: $line"
     }
@@ -89,7 +90,7 @@ class CronTools : ToolSet {
         "'label' is a unique name for this reminder."
     )
     fun setReminder(schedule: String, message: String, label: String): String {
-        val command = "$binary start --args ${shellQuote("REMINDER: $message")}"
+        val command = "$binary start --args ${shellQuote("REMINDER: $message")} --label ${shellQuote(label)}"
         val line = upsert("$schedule $command", label)
         return "Reminder set: $line"
     }
@@ -102,7 +103,7 @@ class CronTools : ToolSet {
         "'label' is a unique name for this alarm."
     )
     fun setAlarm(schedule: String, message: String, label: String): String {
-        val command = "$binary start --args ${shellQuote("ALARM: $message")}"
+        val command = "$binary start --args ${shellQuote("ALARM: $message")} --label ${shellQuote(label)}"
         val line = upsert("$schedule $command", label)
         return "Alarm set: $line"
     }

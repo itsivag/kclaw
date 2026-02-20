@@ -15,10 +15,11 @@ class Kclaw : CliktCommand(name = "kclaw") {
 class Start(val agent: Agent) : CliktCommand(name = "start") {
     override fun help(context: Context) = "start the agent"
     val args by option("--args", help = "message to pass to the agent instead of starting an interactive session")
+    val label by option("--label", help = "log file label for this scheduled run")
 
     override fun run() {
         runBlocking {
-            agent.runAgent(args)
+            agent.runAgent(args, label)
         }
     }
 }
@@ -93,8 +94,38 @@ class Heartbeat(val heartbeatAgent: HeartbeatAgent) : CliktCommand(name = "heart
     override fun run() = runBlocking { heartbeatAgent.runHeartbeat() }
 }
 
+class Crons : CliktCommand(name = "crons") {
+    override fun help(context: Context) = "list all cron jobs registered by the agent"
+
+    override fun run() {
+        val proc = ProcessBuilder("crontab", "-l")
+            .redirectErrorStream(true)
+            .start()
+        val output = proc.inputStream.bufferedReader().readText()
+        proc.waitFor()
+
+        if (output.contains("no crontab for")) {
+            echo("No cron jobs found.")
+            return
+        }
+
+        val managed = output.lines().filter { it.contains("# kclaw:") }
+        if (managed.isEmpty()) {
+            echo("No agent-managed cron jobs found.")
+            return
+        }
+
+        managed.forEach { line ->
+            val label = line.substringAfter("# kclaw:").trim()
+            val schedule = line.trim().split(" ").take(5).joinToString(" ")
+            echo("[$label]  $schedule  …")
+            echo("  $line")
+        }
+    }
+}
+
 fun main(args: Array<String>) {
     val agent = AgentImpl()
     val heartbeatAgent = HeartbeatAgentImpl()
-    Kclaw().subcommands(Start(agent), Onboard(), Heartbeat(heartbeatAgent)).main(args)
+    Kclaw().subcommands(Start(agent), Onboard(), Heartbeat(heartbeatAgent), Crons()).main(args)
 }

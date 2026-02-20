@@ -21,7 +21,7 @@ class HeartbeatAgentImpl : HeartbeatAgent {
         systemPrompt = """
             You are a headless background agent with no user present.
             Use the log tool to record your actions and observations.
-            When you are done, respond with a plain text summary (no tool call).
+            When you are done, respond with a plain text summary (no tool call).    
         """.trimIndent(),
         strategy = reActStrategy(),
         toolRegistry = ToolRegistry {
@@ -36,7 +36,7 @@ class HeartbeatAgentImpl : HeartbeatAgent {
         val heartbeatMd = File(kclawDir, "HEARTBEAT.md").takeIf { it.exists() }?.readText()
             ?: run { println("HEARTBEAT.md not found. Run 'kclaw onboard' first."); return }
 
-        agent.run(
+        val result = agent.run(
             """
             IDENTITY.md: ${File(kclawDir, "IDENTITY.md").takeIf { it.exists() }?.readText() ?: "(not set)"}
             HEARTBEAT.md: $heartbeatMd
@@ -44,5 +44,6 @@ class HeartbeatAgentImpl : HeartbeatAgent {
             Execute your heartbeat instructions. Log actions. Finish with a plain text summary.
             """.trimIndent()
         )
+        appendCronLog("heartbeat", "Heartbeat", result)
     }
 }

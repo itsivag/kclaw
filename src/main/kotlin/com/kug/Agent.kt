@@ -10,19 +10,21 @@ import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
 import java.io.File
 
 interface Agent {
-    suspend fun runAgent(args: String? = null)
+    suspend fun runAgent(args: String? = null, label: String? = null)
 }
 
 class AgentImpl : Agent {
-    val apiKey = System.getenv("GOOGLE_API_KEY") ?: error("The API key is not set.")
+    private val apiKey = System.getenv("GOOGLE_API_KEY") ?: error("GOOGLE_API_KEY is not set.")
 
-    val toolRegistry = ToolRegistry {
+    private val toolRegistry = ToolRegistry {
         tools(CliTools().asTools())
         tools(FileTools().asTools())
         tools(CronTools().asTools())
+        tools(WebTools().asTools())
     }
 
-    val agent = AIAgent(
+    private val agent = AIAgent(
+
         promptExecutor = simpleGoogleAIExecutor(apiKey),
         llmModel = GoogleModels.Gemini2_5Pro,
         systemPrompt = """
@@ -35,34 +37,38 @@ class AgentImpl : Agent {
         toolRegistry = toolRegistry
     )
 
-    // Single-run agent used when --args is provided (e.g. cron reminders).
-    // Uses reActStrategy so it exits as soon as it emits plain text.
-    val singleRunAgent = AIAgent(
+    private val singleRunAgent = AIAgent(
         promptExecutor = simpleGoogleAIExecutor(apiKey),
         llmModel = GoogleModels.Gemini2_5Pro,
         systemPrompt = """
-            You are a headless agent delivering a message.
-            Use the log tool to print the message to the user, then respond with a plain text confirmation to finish.
+            You are a headless background agent executing a scheduled task. No user is present.
+            Use your tools to complete the task fully — search the web, read and write files, schedule follow-up jobs, etc.
+            Use the log tool to record findings and actions as you go.
+            Finish with a plain text summary of everything you did and found.
         """.trimIndent(),
         strategy = reActStrategy(),
         toolRegistry = ToolRegistry {
             tools(FileTools().asTools())
             tools(LogTools().asTools())
+            tools(WebTools().asTools())
+            tools(CronTools().asTools())
         }
     )
 
-    override suspend fun runAgent(args: String?) {
+    override suspend fun runAgent(args: String?, label: String?) {
         val kclawDir = File(installDir(), ".kclaw")
         val identityMd = File(kclawDir, "IDENTITY.md").takeIf { it.exists() }?.readText() ?: "(not set)"
         val memoryMd = File(kclawDir, "MEMORY.md").takeIf { it.exists() }?.readText() ?: "(empty)"
 
         if (args != null) {
-            singleRunAgent.run("""
+            val result = singleRunAgent.run("""
                 IDENTITY.md: $identityMd
                 MEMORY.md: $memoryMd
-                Message: $args
-                Relay this message to the user using the log tool, then finish.
+                Task: $args
+                Execute the task using your tools. Log findings as you go. Finish with a plain text summary.
             """.trimIndent())
+            val logLabel = label ?: args.substringBefore(":").trim().lowercase().replace(" ", "-")
+            appendCronLog(logLabel, args, result)
             return
         }
 
@@ -72,6 +78,7 @@ class AgentImpl : Agent {
             return
         }
         val heartbeatMd = File(kclawDir, "HEARTBEAT.md").takeIf { it.exists() }?.readText() ?: "(not set)"
+
         agent.run(
             """
             AGENT.md:
