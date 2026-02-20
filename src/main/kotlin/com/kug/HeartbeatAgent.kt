@@ -27,6 +27,7 @@ class HeartbeatAgentImpl : HeartbeatAgent {
         toolRegistry = ToolRegistry {
             tools(FileTools().asTools())
             tools(LogTools().asTools())
+            tools(CronTools().asTools())
         }
     )
 

@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
@@ -12,13 +13,12 @@ class Kclaw : CliktCommand(name = "kclaw") {
 }
 
 class Start(val agent: Agent) : CliktCommand(name = "start") {
-    override fun help(context: Context): String {
-        return "start the agent"
-    }
+    override fun help(context: Context) = "start the agent"
+    val args by option("--args", help = "message to pass to the agent instead of starting an interactive session")
 
     override fun run() {
         runBlocking {
-            agent.runAgent()
+            agent.runAgent(args)
         }
     }
 }
