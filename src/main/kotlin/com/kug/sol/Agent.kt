@@ -41,7 +41,8 @@ class AgentImpl : Agent {
             Continue the conversation until the user says goodbye.
         """.trimIndent(),
         strategy = chatAgentStrategy(),
-        toolRegistry = toolRegistry
+        toolRegistry = toolRegistry,
+        maxIterations = 500
     )
 
     private val singleRunAgent = AIAgent(
@@ -59,7 +60,8 @@ class AgentImpl : Agent {
             tools(LogTools().asTools())
             tools(WebTools().asTools())
             tools(CronTools().asTools())
-        }
+        },
+        maxIterations = 500
     )
 
     override suspend fun runAgent(args: String?, label: String?) {
@@ -68,12 +70,14 @@ class AgentImpl : Agent {
         val memoryMd = File(kclawDir, "MEMORY.md").takeIf { it.exists() }?.readText() ?: "(empty)"
 
         if (args != null) {
-            val result = singleRunAgent.run("""
+            val result = singleRunAgent.run(
+                """
                 IDENTITY.md: $identityMd
                 MEMORY.md: $memoryMd
                 Task: $args
                 Execute the task using your tools. Log findings as you go. Finish with a plain text summary.
-            """.trimIndent())
+            """.trimIndent()
+            )
             val logLabel = label ?: args.substringBefore(":").trim().lowercase().replace(" ", "-")
             appendCronLog(logLabel, args, result)
             return
