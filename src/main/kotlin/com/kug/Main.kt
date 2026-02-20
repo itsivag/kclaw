@@ -17,8 +17,7 @@ class Start(val agent: Agent) : CliktCommand(name = "start") {
 
     override fun run() {
         runBlocking {
-            val res = agent.runAgent()
-            echo(res)
+            agent.runAgent()
         }
     }
 }

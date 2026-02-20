@@ -29,3 +29,7 @@ kotlin {
 application {
     mainClass.set("com.kug.MainKt")
 }
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
