@@ -21,13 +21,6 @@ java -version
 ---
 
 ## Build
-
-Clone the repository and build:
-
-```bash
-./gradlew build
-```
-
 To create an installable distribution:
 
 ```bash
