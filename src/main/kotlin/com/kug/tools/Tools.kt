@@ -1,4 +1,4 @@
-package com.kug
+package com.kug.tools
 
 import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.agents.core.tools.annotations.LLMDescription

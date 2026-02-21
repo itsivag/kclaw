@@ -1,4 +1,4 @@
-package com.kug
+package com.kug.sol
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.tools.ToolRegistry
@@ -7,6 +7,14 @@ import ai.koog.agents.ext.agent.chatAgentStrategy
 import ai.koog.agents.ext.agent.reActStrategy
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
+import com.kug.tools.CliTools
+import com.kug.tools.CronTools
+import com.kug.tools.CryptoTools
+import com.kug.tools.FileTools
+import com.kug.tools.LogTools
+import com.kug.tools.WebTools
+import com.kug.tools.appendCronLog
+import com.kug.utils.installDir
 import java.io.File
 
 interface Agent {
@@ -21,6 +29,7 @@ class AgentImpl : Agent {
         tools(FileTools().asTools())
         tools(CronTools().asTools())
         tools(WebTools().asTools())
+        tools(CryptoTools().asTools())
     }
 
     private val agent = AIAgent(
@@ -34,25 +43,8 @@ class AgentImpl : Agent {
             Continue the conversation until the user says goodbye.
         """.trimIndent(),
         strategy = chatAgentStrategy(),
-        toolRegistry = toolRegistry
-    )
-
-    private val singleRunAgent = AIAgent(
-        promptExecutor = simpleGoogleAIExecutor(apiKey),
-        llmModel = GoogleModels.Gemini2_5Pro,
-        systemPrompt = """
-            You are a headless background agent executing a scheduled task. No user is present.
-            Use your tools to complete the task fully — search the web, read and write files, schedule follow-up jobs, etc.
-            Use the log tool to record findings and actions as you go.
-            Finish with a plain text summary of everything you did and found.
-        """.trimIndent(),
-        strategy = reActStrategy(),
-        toolRegistry = ToolRegistry {
-            tools(FileTools().asTools())
-            tools(LogTools().asTools())
-            tools(WebTools().asTools())
-            tools(CronTools().asTools())
-        }
+        toolRegistry = toolRegistry,
+        maxIterations = 500
     )
 
     override suspend fun runAgent(args: String?, label: String?) {
@@ -61,14 +53,40 @@ class AgentImpl : Agent {
         val memoryMd = File(kclawDir, "MEMORY.md").takeIf { it.exists() }?.readText() ?: "(empty)"
 
         if (args != null) {
-            val result = singleRunAgent.run("""
+            val logLabel = label ?: args.substringBefore(":").trim().lowercase().replace(" ", "-")
+            val tmpPath = ".kclaw/logs/.$logLabel.tmp.md"
+
+            val taskAgent = AIAgent(
+                promptExecutor = simpleGoogleAIExecutor(apiKey),
+                llmModel = GoogleModels.Gemini2_5Pro,
+                systemPrompt = """
+                    You are a headless background agent executing a scheduled task. No user is present.
+                    Use your tools to complete the task fully — search the web, read and write files, etc.
+                    When you have gathered all findings, write the complete results to the file specified in the task using writeFile.
+                    Then finish with a plain text completion message.
+                """.trimIndent(),
+                strategy = reActStrategy(),
+                toolRegistry = ToolRegistry {
+                    tools(FileTools().asTools())
+                    tools(WebTools().asTools())
+                    tools(CronTools().asTools())
+                },
+                maxIterations = 500
+            )
+            taskAgent.run(
+                """
                 IDENTITY.md: $identityMd
                 MEMORY.md: $memoryMd
                 Task: $args
-                Execute the task using your tools. Log findings as you go. Finish with a plain text summary.
-            """.trimIndent())
-            val logLabel = label ?: args.substringBefore(":").trim().lowercase().replace(" ", "-")
-            appendCronLog(logLabel, args, result)
+                Results file: $tmpPath
+                Perform the task, then write ALL findings (titles, summaries, scores, links, tool names, etc.) to the Results file using writeFile. Then finish.
+                """.trimIndent()
+            )
+
+            val tmpFile = File(installDir(), tmpPath)
+            val content = tmpFile.takeIf { it.exists() }?.readText() ?: "(agent produced no output)"
+            tmpFile.delete()
+            appendCronLog(logLabel, args, content)
             return
         }
 

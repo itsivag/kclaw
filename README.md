@@ -1,38 +1,106 @@
+````markdown
 # kclaw
 
-`kclaw` is a Kotlin-based terminal application built using [Clikt](https://ajalt.github.io/clikt/).
+`kclaw` is a Kotlin-based terminal application built using Clikt.  
+It provides a clean and extensible CLI interface for running and managing kclaw workflows directly from your terminal.
+
+---
 
 ## Prerequisites
-- Java 17
-- Gradle
 
-## Build and Run
-To build the application and run the `helloworld` command:
+- Java 17
+- Gradle (or use the included Gradle wrapper `./gradlew`)
+- macOS or Linux (for global installation steps below)
+
+Verify Java:
 
 ```bash
-./gradlew run --args="helloworld"
-```
+java -version
+````
 
-## Global Installation (Mac/Linux)
-To install the `kclaw` command locally so it can be run from anywhere in your terminal:
+---
 
-1. Build the installation distribution:
+## Build
+To create an installable distribution:
+
 ```bash
 ./gradlew installDist
 ```
 
-2. Create a symlink to a local binaries directory (like `~/bin`):
+---
+
+## Global Installation (Mac/Linux)
+
+After running `installDist`, navigate to the generated binary directory:
+
 ```bash
-mkdir -p ~/bin
-ln -sf $(pwd)/build/install/kclaw/bin/kclaw ~/bin/kclaw 
+cd build/install/kclaw/bin
 ```
 
-3. Ensure that `~/bin` is in your system's `PATH`. If you are using ZSH (default on macOS), add the following to your `~/.zshrc`:
+Set required environment variables:
+
 ```bash
-export PATH="$HOME/bin:$PATH"
+export GOOGLE_API_KEY={api}
+export TAVILY_API_KEY={api}
 ```
 
-4. Reload your shell or run `source ~/.zshrc`. Now you can use `kclaw` globally:
+Run the CLI:
+
 ```bash
-kclaw helloworld
+./kclaw onboard
+./kclaw start
+```
+
+---
+
+## Optional: Add to PATH
+
+To use `kclaw` globally:
+
+```bash
+export PATH="$PATH:$(pwd)"
+```
+
+Or move it to a global location:
+
+```bash
+sudo mv kclaw /usr/local/bin/
+```
+
+---
+
+## Development
+
+Run without installation:
+
+```bash
+./gradlew run
+```
+
+---
+
+## Tech Stack
+
+* Kotlin
+* Clikt
+* Gradle
+
+---
+
+# License
+
+```
+            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+                    Version 2, December 2004
+
+ Copyright (C) 2004 Sam Hocevar
+ 14 rue de Plaisance, 75014 Paris, France
+ Everyone is permitted to copy and distribute verbatim or modified
+ copies of this license document, and changing it is allowed as long
+ as the name is changed.
+
+            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+  0. You just DO WHAT THE FUCK YOU WANT TO.
 ```

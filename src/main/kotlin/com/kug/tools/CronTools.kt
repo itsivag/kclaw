@@ -1,8 +1,9 @@
-package com.kug
+package com.kug.tools
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.agents.core.tools.reflect.ToolSet
+import com.kug.utils.installDir
 import java.io.File
 
 class CronTools : ToolSet {
