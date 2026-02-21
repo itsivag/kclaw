@@ -9,6 +9,7 @@ import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
 import com.kug.tools.CliTools
 import com.kug.tools.CronTools
+import com.kug.tools.CryptoTools
 import com.kug.tools.FileTools
 import com.kug.tools.LogTools
 import com.kug.tools.WebTools
@@ -28,6 +29,7 @@ class AgentImpl : Agent {
         tools(FileTools().asTools())
         tools(CronTools().asTools())
         tools(WebTools().asTools())
+        tools(CryptoTools().asTools())
     }
 
     private val agent = AIAgent(
